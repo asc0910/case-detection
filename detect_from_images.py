@@ -230,7 +230,7 @@ def process(origin_img, case_height, case_width, delta, scale):
 
     # start_time = time.perf_counter()
     hx, hdx, hy, hdy = get_color_squares(edges, scale)
-    print("get_color_square", hx, hdx, hy, hdy)
+    # print("get_color_square", hx, hdx, hy, hdy)
     # end_time = time.perf_counter()
     # elapsed_time = end_time - start_time
     # print(f'get color squares-The function took {elapsed_time} seconds to complete.')
@@ -240,26 +240,51 @@ def process(origin_img, case_height, case_width, delta, scale):
     ux, uy = get_case_upper_line(gradient, bx, by, scale, hdx, 15, case_height, case_width) #15mm=hdx
 
 
-    bx, by, ux, uy = bx*scale, by*scale, ux*scale, uy*scale
-    hx, hdx, hy, hdy = hx*scale, hdx*scale, hy*scale, hdy*scale
+    printscale = scale
+    bx, by, ux, uy = bx*scale//printscale, by*scale//printscale, ux*scale//printscale, uy*scale//printscale
+    hx, hdx, hy, hdy = hx*scale//printscale, hdx*scale//printscale, hy*scale//printscale, hdy*scale//printscale
     # bx,by,ux,uy = finetune(bx, by, ux, uy, case_height, case_width)
-    wc,wl = 8,2
-    printscale = 1
+    if (printscale > 1):
+        origin_img = my_resize_image(origin_img, 1./printscale)
+    wc,wl,ra = 12,2,3
+    wc = max(2, wc//printscale)
+    wl = max(1, wl//printscale)
+    ra = max(1, ra//printscale)
     cv2.line(origin_img, (bx, by), (bx, uy), (0, 255, 0), wl)
     cv2.line(origin_img, (bx, by), (ux, by), (0, 255, 0), wl)
     cv2.line(origin_img, (ux, uy), (bx, uy), (0, 255, 0), wl)
     cv2.line(origin_img, (ux, uy), (ux, by), (0, 255, 0), wl)
     offset = delta * (ux-bx) // case_width
     cx, cy = (bx+ux)//2, (by+uy)//2
-    cv2.circle(origin_img, (cx, cy), 3, (0, 0, 255), wc)
-    cv2.circle(origin_img, (cx-offset, cy), 3, (0, 0, 255), wc)
-    cv2.circle(origin_img, (cx+offset, cy), 3, (0, 0, 255), wc)
-    cv2.circle(origin_img, (cx, cy-offset), 3, (0, 0, 255), wc)
-    cv2.circle(origin_img, (cx, cy+offset), 3, (0, 0, 255), wc)
-    for i in range(6):
-        for j in range(4) :
-            cv2.circle(origin_img, (hx+i*hdx, hy+j*hdy), 5, (0, 0, 255), 4)
     
-    if (printscale > 1):
-        origin_img = my_resize_image(origin_img, 1./printscale)
+    crop = origin_img[cy-wc-offset:cy+wc+offset+1, cx-wc-offset:cx+wc+offset+1, :]
+    # cv2.imshow('direction_image bImage', crop), cv2.waitKey(0)
+    
+    crop = np.mean(np.mean(crop, axis=0), axis=0)
+    # print(crop)
+    best_answer = 0
+    sum = [0, 0, 0]
+    for a in range(2):
+        for b in range(2):
+            for c in range(2):
+                if (a+b+c==0 or a+b+c==3):
+                    continue
+                ans = np.abs(crop[0]-255*a) + np.abs(crop[1]-255*b) + np.abs(crop[2]-255*c)
+                if best_answer < ans:
+                    best_answer = ans
+                    sum = [255*a, 255*b, 255*c]
+    # print('sum = ', sum)
+    sum0, sum1, sum2 = int(sum[0]), int(sum[1]), int(sum[2])
+
+    offx, offy = [-1, 0, 1, 0, 0], [0, 0, 0, -1, 1]
+    for r in range(5):
+        ox = cx + offx[r] * offset
+        oy = cy + offy[r] * offset        
+        cv2.circle(origin_img, (ox, oy), ra, (sum0, sum1, sum2), wc)
+        # cv2.circle(origin_img, (ox, oy), 3, (255, 0, 0), wc)
+
+    for i in range(6):
+        for j in range(4):
+            cv2.circle(origin_img, (hx+i*hdx, hy+j*hdy), ra, (0, 0, 255), wc)
+    
     return origin_img
