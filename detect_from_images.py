@@ -12,9 +12,15 @@ def get_color_squares(edges, scale) :
     kernel = np.ones((3,3),np.uint8)
     edges = cv2.dilate(edges, kernel, iterations = 1)
 
-    xn, xm, yn, ym, delta = 103, 294, 429, 549, 28
-    xn, xm, yn, ym, delta = xn*7//scale, xm*7//scale, yn*7//scale, ym*7//scale, delta*7//scale 
+    width = int(edges.shape[1] * scale)
+    height = int(edges.shape[0] * scale)
+
+    xn, xm, yn, ym, delta = 103*7, 294*7, 429*7, 549*7, 28*7
     area_s = 330 * 7 * 7 / scale / scale 
+    if (-100<(width*16-height*9)<100) :
+        xn, xm, yn, ym, delta = 150, 1409, 1400, 1800, 28*7
+        area_s = 150 * 7 * 7 / scale / scale 
+    xn, xm, yn, ym, delta = xn//scale, xm//scale, yn//scale, ym//scale, delta//scale
 
     crop_img = edges[yn-delta:ym+delta, xn-delta:xm+delta]
     # Find connected components (blobs) in the image
@@ -46,6 +52,10 @@ def get_color_squares(edges, scale) :
     hx, hdx = 807, 247
     ix, idx = 807, 247
     ixs, idxs = 100, 25
+    if (-100<(width*16-height*9)<100) :
+        hx, hdx = 197, 120
+        ix, idx = 197, 120
+        ixs, idxs = 50, 12
     hx, hdx, ix, idx, ixs, idxs = hx//scale, hdx//scale, ix//scale, idx//scale, ixs//scale, idxs//scale
     for x in range(ix-ixs, ix+ixs):
         for dx in range(idx-idxs, idx+idxs):
@@ -62,6 +72,10 @@ def get_color_squares(edges, scale) :
     hy, hdy = 3061, 247
     iy, idy = 3061, 247
     iys, idys = 100, 25
+    if (-100<(width*16-height*9)<100) :
+        hy, hdy = 1450, 120
+        iy, idy = 1450, 120
+        iys, idys = 50, 12
     hy, hdy, iy, idy, iys, idys = hy//scale, hdy//scale, iy//scale, idy//scale, iys//scale, idys//scale
     for y in range(iy-iys, iy+iys):
         for dy in range(idy-idys, idy+idys):
@@ -123,6 +137,10 @@ def get_gradient(img) :
 
 def get_case_upper_line(gradient_img, bx, by, scale, hdx, hdxsize, case_height, case_width) :
     xn, xm, yn, ym = bx + 50*7//scale, 356*7//scale, 20*7//scale, by - 50*7//scale
+    width = int(gradient_img.shape[1] * scale)
+    height = int(gradient_img.shape[0] * scale)
+    if (-100<(width*16-height*9)<100) :
+        xn, xm, yn, ym = bx + 25*7//scale, 900//scale, 100//scale, by - 25*7//scale
 
     crop_img = gradient_img[yn:ym, xn:xm]
 
@@ -221,7 +239,7 @@ def process(origin_img, case_height, case_width, delta, scale):
     img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     gradient = get_gradient(img)
 
-    # cv2.imshow('direction_image bImage', img_gray), cv2.waitKey(0)
+    # cv2.imshow('gradient bImage', gradient), cv2.waitKey(0)
     # cv2.imwrite("./gray_images/gray_images_hoho.jpg", gradient)
 
     # Apply Canny Edge Detection
@@ -240,7 +258,7 @@ def process(origin_img, case_height, case_width, delta, scale):
     ux, uy = get_case_upper_line(gradient, bx, by, scale, hdx, 15, case_height, case_width) #15mm=hdx
 
 
-    printscale = scale
+    printscale = 1
     bx, by, ux, uy = bx*scale//printscale, by*scale//printscale, ux*scale//printscale, uy*scale//printscale
     hx, hdx, hy, hdy = hx*scale//printscale, hdx*scale//printscale, hy*scale//printscale, hdy*scale//printscale
     # bx,by,ux,uy = finetune(bx, by, ux, uy, case_height, case_width)
@@ -250,10 +268,10 @@ def process(origin_img, case_height, case_width, delta, scale):
     wc = max(2, wc//printscale)
     wl = max(1, wl//printscale)
     ra = max(1, ra//printscale)
-    cv2.line(origin_img, (bx, by), (bx, uy), (0, 255, 0), wl)
-    cv2.line(origin_img, (bx, by), (ux, by), (0, 255, 0), wl)
-    cv2.line(origin_img, (ux, uy), (bx, uy), (0, 255, 0), wl)
-    cv2.line(origin_img, (ux, uy), (ux, by), (0, 255, 0), wl)
+    # cv2.line(origin_img, (bx, by), (bx, uy), (0, 255, 0), wl)
+    # cv2.line(origin_img, (bx, by), (ux, by), (0, 255, 0), wl)
+    # cv2.line(origin_img, (ux, uy), (bx, uy), (0, 255, 0), wl)
+    # cv2.line(origin_img, (ux, uy), (ux, by), (0, 255, 0), wl)
     offset = delta * (ux-bx) // case_width
     cx, cy = (bx+ux)//2, (by+uy)//2
     
@@ -283,8 +301,8 @@ def process(origin_img, case_height, case_width, delta, scale):
         cv2.circle(origin_img, (ox, oy), ra, (sum0, sum1, sum2), wc)
         # cv2.circle(origin_img, (ox, oy), 3, (255, 0, 0), wc)
 
-    for i in range(6):
-        for j in range(4):
-            cv2.circle(origin_img, (hx+i*hdx, hy+j*hdy), ra, (0, 0, 255), wc)
+    # for i in range(6):
+    #     for j in range(4):
+    #         cv2.circle(origin_img, (hx+i*hdx, hy+j*hdy), ra, (0, 0, 255), wc)
     
     return origin_img

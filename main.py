@@ -19,7 +19,7 @@ for filename in os.listdir(dir_path):
         out_filename = base_filename + file_extension
 
         start_time = time.perf_counter()
-        new_img = detect_from_images.process(img, 147, 72, 3, 7)
+        new_img = detect_from_images.process(img, 147, 72, 3, 4)
         end_time = time.perf_counter()
         elapsed_time = end_time - start_time
         print(f'The function took {elapsed_time} seconds to complete.')
