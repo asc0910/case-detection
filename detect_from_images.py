@@ -94,16 +94,32 @@ def sobel_gradient(img):
 def custom_gradient(img):
     gradient_x = np.diff(img.astype(np.float32), axis=1)
     gradient_y = np.diff(img.astype(np.float32), axis=0)
+
+
     gradient_x = np.pad(gradient_x, ((0, 0), (1, 0)), mode='constant', constant_values=0)
     gradient_y = np.pad(gradient_y, ((1, 0), (0, 0)), mode='constant', constant_values=0)
     gradient_magnitude = np.sqrt(gradient_x**2 + gradient_y**2)
+
+    # direction = np.arctan2(gradient_y, gradient_x) * 128 / np.pi
+    # direction[direction > 118] = 255
+    # direction[direction < -118] = 255
+    # direction[(direction>0) & (direction<10)] = 255
+    # direction[(direction>-10) & (direction<0)] = 255
+    # direction[(direction>54) & (direction<74)] = 255
+    # direction[(direction>182) & (direction<202)] = 255
+    # direction[direction < 255] = 0
+    # # gradient_magnitude[direction != 255] = 0
+    # # Convert direction to 8-bit image for visualization (optional)
+    # direction_image = np.uint8(direction)
+
     return gradient_magnitude
 
 def get_gradient(img) :
     img_gray = np.max(img, axis=2)
     gradient = custom_gradient(img_gray)
     ret, thresh = cv2.threshold(gradient, 5, 255, cv2.THRESH_BINARY)
-    return img_gray, thresh.astype(np.uint8)
+    # cv2.imshow('direction_image bImage', thresh), cv2.waitKey(0)
+    return thresh.astype(np.uint8)
 
 def get_case_upper_line(gradient_img, bx, by, scale, hdx, hdxsize, case_height, case_width) :
     xn, xm, yn, ym = bx + 50*7//scale, 356*7//scale, 20*7//scale, by - 50*7//scale
@@ -115,52 +131,37 @@ def get_case_upper_line(gradient_img, bx, by, scale, hdx, hdxsize, case_height, 
     # Find connected components (blobs) in the image
     num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(crop_img, connectivity=8)
 
-    # # Iterate over all blobs
-    case_height = case_height*hdx/hdxsize*0.4
-    case_width = case_width*hdx/hdxsize*0.4
-    ux, uy = 0, ym-yn
-    for i in range(1, num_labels):  # Start from 1 to ignore the background
-        # Get the area of the blob
-        area = stats[i, cv2.CC_STAT_AREA]
-        sWidth = stats[i, cv2.CC_STAT_WIDTH]
-        sHeight = stats[i, cv2.CC_STAT_HEIGHT]
-        if (case_width < sWidth or case_height < sHeight) :
-            sRight = stats[i, cv2.CC_STAT_LEFT] + sWidth
-            if ux < sRight:
-                ux = sRight
-            sTop = stats[i, cv2.CC_STAT_TOP]
-            if uy > sTop:
-                uy = sTop  
-    return ux+xn, uy+yn
-
     # # Create an empty image to draw the filtered blobs
     filtered = np.zeros_like(crop_img)
-    
+    case_height = case_height*hdx/hdxsize
+    case_width = case_width*hdx/hdxsize
+    lambda1 = 0.05
     # # Iterate over all blobs
     for i in range(1, num_labels):  # Start from 1 to ignore the background
         # Get the area of the blob
         sWidth = stats[i, cv2.CC_STAT_WIDTH]
         sHeight = stats[i, cv2.CC_STAT_HEIGHT]
-        if (case_width < sWidth or case_height < sHeight) :
-            filtered[labels == i] = min(255, sWidth)
+        if (case_width*lambda1 < sWidth or case_height*lambda1 < sHeight) :
+            filtered[labels == i] = 1
 
-    case_height = case_height*hdx/hdxsize*0.5
-    case_width = case_width*hdx/hdxsize*0.5
-    ux, uy = 0, ym-yn   
+    ux, uy = 0, ym-yn
+    lambda2 = 0.3
     
     row_sums = np.sum(filtered, axis=1)
+    tot_sum = 0
     for y in range(ym-yn):
-        if (row_sums[y] > case_width):
+        tot_sum = tot_sum + row_sums[y]
+        if (tot_sum > case_width*lambda2):
             uy = y
             break
     column_sums = np.sum(filtered, axis=0)
-    for x in range(xm-xn):
-        if (column_sums[x] > case_height):
+    tot_sum = 0
+    for x in range(xm-xn-1, -1, -1):
+        tot_sum = tot_sum + column_sums[x]
+        if (tot_sum > case_height*lambda2):
             ux = x
+            break
     return ux+xn, uy+yn
-    aaaaaaaaaaaaaaaaaaaaaaa
-    filtered = np.zeros_like(crop_img)
-    
     # # Iterate over all blobs
     case_height = case_height*hdx/hdxsize*0.4
     case_width = case_width*hdx/hdxsize*0.4
@@ -171,17 +172,12 @@ def get_case_upper_line(gradient_img, bx, by, scale, hdx, hdxsize, case_height, 
         sWidth = stats[i, cv2.CC_STAT_WIDTH]
         sHeight = stats[i, cv2.CC_STAT_HEIGHT]
         if (case_width < sWidth or case_height < sHeight) :
-            filtered[labels == i] = 255
             sRight = stats[i, cv2.CC_STAT_LEFT] + sWidth
             if ux < sRight:
                 ux = sRight
             sTop = stats[i, cv2.CC_STAT_TOP]
             if uy > sTop:
                 uy = sTop  
-    # gradient_img = np.zeros_like(gradient_img)
-    # gradient_img[yn:ym, xn:xm] = 255*np.ones_like(filtered)
-    # cv2.imshow('filtered Image', filtered)
-    # cv2.waitKey(0)
     return ux+xn, uy+yn
 
 def normalize_image(image):
@@ -223,8 +219,9 @@ def process(origin_img, case_height, case_width, delta, scale):
     img = my_resize_image(origin_img, 1./scale)
     img = cv2.GaussianBlur(img, (5, 5), 0)
     img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    _, gradient = get_gradient(img)
-    # cv2.imshow('gradient Image', gradient), cv2.waitKey(0)
+    gradient = get_gradient(img)
+
+    # cv2.imshow('direction_image bImage', img_gray), cv2.waitKey(0)
     # cv2.imwrite("./gray_images/gray_images_hoho.jpg", gradient)
 
     # Apply Canny Edge Detection
@@ -247,7 +244,7 @@ def process(origin_img, case_height, case_width, delta, scale):
     hx, hdx, hy, hdy = hx*scale, hdx*scale, hy*scale, hdy*scale
     # bx,by,ux,uy = finetune(bx, by, ux, uy, case_height, case_width)
     wc,wl = 8,2
-    printscale = scale
+    printscale = 1
     cv2.line(origin_img, (bx, by), (bx, uy), (0, 255, 0), wl)
     cv2.line(origin_img, (bx, by), (ux, by), (0, 255, 0), wl)
     cv2.line(origin_img, (ux, uy), (bx, uy), (0, 255, 0), wl)
