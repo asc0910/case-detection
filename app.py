@@ -33,9 +33,9 @@ def generate_frames():
             working_time = str(timedelta(seconds=int(elapsed_time)))
             font = cv2.FONT_HERSHEY_SIMPLEX
             bottom_left = (10, height - 20)
-            font_scale = 1
+            font_scale = 5
             font_color = (255, 255, 255)  # White color in BGR format
-            line_type = 2
+            line_type = 3
             frame = cv2.putText(frame, working_time, bottom_left, font, font_scale, font_color, line_type)
 
             # Encode the frame as JPEG and yield it for streaming
