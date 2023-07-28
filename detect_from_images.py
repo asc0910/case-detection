@@ -43,11 +43,12 @@ def get_color_squares(edges, scale, bx1, by1) :
         sLeft = stats[i, cv2.CC_STAT_LEFT]
         sTop = stats[i, cv2.CC_STAT_TOP]
         if sWidth<=1.2*sHeight and sHeight<=1.2*sWidth and sWidth*sHeight <= area*1.2 and 20 <= area and area_s/1.2 <= area <= area_s*1.2 and sLeft>0 and sTop>0:
+            # print('==', area)
             cenx[cens], ceny[cens] = centroids[i]
             cens = cens+1
     best_answer = 1e8
     hx, hdx = 0, 0
-    # print(cens)
+    print(cens)
     mnx,mxx = np.min(cenx[0:cens]), np.max(cenx[0:cens])
     for r in range(1,6):
         dx = int((mxx-mnx+r/2) // r)
@@ -246,9 +247,9 @@ def finetune(bx, by, ux, uy, case_height, case_width):
     ux,uy = bx+w,by-h
     return bx,by,ux,uy
 
-def get_case_bottom_line1(img):
+def get_case_bottom_line1(img, type):
     width, height = img.shape[1], img.shape[0]
-    crop = img[0:height//50, 0:width//2]
+    crop = img[0:height//2, 0:width//50]
     # print(width, height)
     # cv2.imshow('crop Image', crop), cv2.waitKey(0)
     num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(crop, connectivity=4)
@@ -273,7 +274,13 @@ def get_case_bottom_line1(img):
         by = int(height*0.6)
     return bx, by+height//10
 
-def process(origin_img, case_height, case_width, delta, scale):
+def process(origin_img, case_height, case_width, delta, scale, type=None):
+    if type == None:
+        type = 3
+    if type == 1:
+        origin_img = cv2.rotate(origin_img, cv2.ROTATE_90_CLOCKWISE)
+    # cv2.imshow('neori', origin_img), cv2.waitKey(0)
+
     case_height, case_width = case_height+3, case_width+4
     width, height = origin_img.shape[1], origin_img.shape[0]
     img = my_resize_image(origin_img, 1./scale)
@@ -285,7 +292,7 @@ def process(origin_img, case_height, case_width, delta, scale):
     # elapsed_time = end_time - start_time
     # print(f'get color squares-The function took {elapsed_time} seconds to complete.')
     # cv2.imshow('gradient bImage', gradient), cv2.waitKey(0)
-    bx1, by1 = get_case_bottom_line1(gradient)
+    bx1, by1 = get_case_bottom_line1(gradient, type)
 
     # Apply Canny Edge Detection
     edges = cv2.Canny(img_gray, 100, 200)
@@ -350,5 +357,6 @@ def process(origin_img, case_height, case_width, delta, scale):
     for i in range(6):
         for j in range(4):
             cv2.circle(origin_img, (int(hx+i*hdx), int(hy+j*hdy)), ra, (0, 0, 255), wc)
-    
+    if type == 1:
+        origin_img = cv2.rotate(origin_img, cv2.ROTATE_90_COUNTERCLOCKWISE)
     return origin_img

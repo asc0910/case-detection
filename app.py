@@ -8,7 +8,7 @@ from datetime import timedelta
 app = Flask(__name__)
 
 # Path to the video file
-video_file = 'input.mp4'
+video_file = 'input-1920x1080.mp4'
 
 def generate_frames():
     video = cv2.VideoCapture(video_file)
@@ -25,7 +25,7 @@ def generate_frames():
             break
         else:            
             start_time = time.perf_counter()
-            frame = detect_from_images.process(frame, 147, 72, 3, 3)
+            frame = detect_from_images.process(frame, 147, 72, 3, 3, 1)
             end_time = time.perf_counter()
             elapsed_time = end_time - start_time
             print(f'process-The function took {elapsed_time} seconds to complete.')

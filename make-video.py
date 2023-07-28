@@ -17,14 +17,14 @@ video_codec = cv2.VideoWriter_fourcc(*'mp4v')
 fps = 10.0
 
 # Set the output video file name
-output_file = 'input.mp4'
+output_file = 'input3.mp4'
 
 # Get the first image to read its dimensions
 first_image = cv2.imread(os.path.join(image_folder, images[0]))
-height, width, _ = 1920, 1080, 3
+vheight, vwidth, _ = 1080, 1920, 3
 
 # Create a VideoWriter object to write the video
-video_writer = cv2.VideoWriter(output_file, video_codec, fps, (width, height))
+video_writer = cv2.VideoWriter(output_file, video_codec, fps, (vwidth, vheight))
 
 # Loop through the images and add them to the video
 for r in range(5):
@@ -38,8 +38,15 @@ for r in range(5):
             if (height>3000) :
                 x = int(400 + 100*np.random.rand())
                 y = int(200 + 100*np.random.rand())
-                image = image[y:y+1920*2, x:x+1080*2]
-                image = cv2.resize(image, (1080, 1920), interpolation = cv2.INTER_AREA)
+                if (vheight == 1920) :
+                    image = image[y:y+1920*2, x:x+1080*2]
+                    image = cv2.resize(image, (1080, 1920), interpolation = cv2.INTER_AREA)
+                else :
+                    image = image[x:x+1080*2, y:y+1920*2]
+                    image = cv2.resize(image, (1920, 1080), interpolation = cv2.INTER_AREA)
+            # rimg = cv2.rotate(image, cv2.ROTATE_90_COUNTERCLOCKWISE)
+            # cv2.imshow("rotate90", rimg), cv2.waitKey(0)
+            # cv2.imwrite(image_path.replace('images', 'gray_images'), rimg)
             # cv2.imshow('hoho', image)
             # cv2.waitKey(0)
             # break
