@@ -44,15 +44,7 @@ for r in range(5):
                 else :
                     image = image[x:x+1080*2, y:y+1920*2]
                     image = cv2.resize(image, (1920, 1080), interpolation = cv2.INTER_AREA)
-            # rimg = cv2.rotate(image, cv2.ROTATE_90_COUNTERCLOCKWISE)
-            # cv2.imshow("rotate90", rimg), cv2.waitKey(0)
-            # cv2.imwrite(image_path.replace('images', 'gray_images'), rimg)
-            # cv2.imshow('hoho', image)
-            # cv2.waitKey(0)
-            # break
             video_writer.write(image)
-        # break
-    # break
 
 # Release the VideoWriter and close the video file
 video_writer.release()

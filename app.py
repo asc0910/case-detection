@@ -4,59 +4,34 @@ import time
 import detect_from_images
 from flask import Flask, Response, render_template
 from datetime import timedelta
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 
 app = Flask(__name__)
 
 # Path to the video file
-video_file = 'input-1920x1080.mp4'
+video_file = os.environ.get('CAMERA_VIDEO_INPUT')
+fps = float(os.environ.get('CAMERA_FPS'))
 
 def generate_frames():
     video = cv2.VideoCapture(video_file)
-    fps = video.get(cv2.CAP_PROP_FPS)
-    print(fps)
-    started_time = time.time()
-    frame_count = 0
-
     while True:
-        frame_count += 1
         frame_start_time = time.perf_counter()
         success, frame = video.read()
         if not success:
             break
         else:            
-            start_time = time.perf_counter()
             frame = detect_from_images.process(frame, 147, 72, 3, 3, 1)
-            end_time = time.perf_counter()
-            elapsed_time = end_time - start_time
-            print(f'process-The function took {elapsed_time} seconds to complete.')
-
-
-            # Add current time to the frame
-            height, width, _ = frame.shape
-            elapsed_time = time.time() - started_time
-            working_time = str(timedelta(seconds=int(elapsed_time)))
-            font = cv2.FONT_HERSHEY_SIMPLEX
-            bottom_left = (10, height - 20)
-            font_scale = 5
-            font_color = (255, 255, 255)  # White color in BGR format
-            line_type = 3
-            frame = cv2.putText(frame, working_time + "," + str(frame_count), bottom_left, font, font_scale, font_color, line_type)
-
-            # Encode the frame as JPEG and yield it for streaming
-            start_time = time.perf_counter()
             ret, buffer = cv2.imencode('.jpg', frame)
-            end_time = time.perf_counter()
-            elapsed_time = end_time - start_time
-            print(f'imencode-The function took {elapsed_time} seconds to complete.')
-
             frame = buffer.tobytes()
             yield (b'--frame\r\n'
                    b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
             
         frame_end_time = time.perf_counter()
         frame_elapsed_time = frame_end_time - frame_start_time
-        time.sleep(max(0, 1 / fps -frame_elapsed_time))
-        print(1 / fps -frame_elapsed_time)
+        time.sleep(max(0, 1 / fps - frame_elapsed_time))
 
 @app.route('/')
 def index():

@@ -4,10 +4,9 @@ import time
 import cv2
 import numpy as np
 
-from colour import read_image
 # from colour_checker_detection import colour_checkers_coordinates_segmentation
 
-dir_path = './images'
+dir_path = './test-images'
 sstart_time = time.perf_counter()
 # Loop through all files in the directory
 
@@ -52,7 +51,8 @@ for rrr in range(1):
 
             # cv2.imshow('detection Image', img)
             # cv2.waitKey(0)
-            cv2.imwrite(os.path.join(dir_path.replace("images", "gray_images"), filename.replace(".", "-"+str(rrr)+".")), img)
+            print(os.path.join(dir_path.replace("test-images", "test-images/out"), filename.replace(".", "-"+str(rrr)+".")))
+            cv2.imwrite(os.path.join(dir_path.replace("test-images", "test-images/out"), filename.replace(".", "-"+str(rrr)+".")), img)
             # break
         else:
             continue
