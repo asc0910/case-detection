@@ -12,14 +12,11 @@ load_dotenv()
 app = Flask(__name__)
 
 # Path to the video file
-# video_file = os.environ.get('CAMERA_VIDEO_INPUT')
-# fps = float(os.environ.get('CAMERA_FPS'))
-
-video_file = 'test-input-1920x1080.mp4'
+video_file = os.environ.get('CAMERA_VIDEO_INPUT')
+fps = float(os.environ.get('CAMERA_FPS'))
 
 def generate_frames():
     video = cv2.VideoCapture(video_file)
-    fps = video.get(cv2.CAP_PROP_FPS)
     while True:
         frame_start_time = time.perf_counter()
         success, frame = video.read()
