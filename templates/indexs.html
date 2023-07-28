@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Video Streaming with Current Time</title>
+</head>
+<body>
+    <h1>Video Streaming with Current Time</h1>
+    <img src="{{ url_for('video_feed') }}" width="540" height="720">
+    <p>Current Time: <span id="current_time"></span></p>
+
+    <script>
+        // Function to update the current time every 100ms
+        function updateCurrentTime() {
+            const currentTimeSpan = document.getElementById('current_time');
+            currentTimeSpan.textContent = new Date().toLocaleTimeString();
+        }
+
+        setInterval(updateCurrentTime, 100); // Update every 100ms
+    </script>
+</body>
+</html>

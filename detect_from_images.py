@@ -19,7 +19,7 @@ def get_color_squares(edges, scale, bx1, by1) :
     crop = edges[by1:height, bx1:width]
     # cv2.imshow('crop Image', crop), cv2.waitKey(0)
     # Find connected components (blobs) in the image
-    num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(cv2.bitwise_not(crop), connectivity=4)
+    num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(cv2.bitwise_not(crop), connectivity=8)
     
     # Iterate over all blobs
     cenx, ceny, cens = np.zeros(num_labels, dtype=int), np.zeros(num_labels, dtype=int), 0
@@ -40,7 +40,9 @@ def get_color_squares(edges, scale, bx1, by1) :
         area = stats[i, cv2.CC_STAT_AREA]
         sWidth = stats[i, cv2.CC_STAT_WIDTH]
         sHeight = stats[i, cv2.CC_STAT_HEIGHT]
-        if sWidth<=1.2*sHeight and sHeight<=1.2*sWidth and sWidth*sHeight <= area*1.2 and 20 <= area and area_s/1.2 <= area <= area_s*1.2:
+        sLeft = stats[i, cv2.CC_STAT_LEFT]
+        sTop = stats[i, cv2.CC_STAT_TOP]
+        if sWidth<=1.2*sHeight and sHeight<=1.2*sWidth and sWidth*sHeight <= area*1.2 and 20 <= area and area_s/1.2 <= area <= area_s*1.2 and sLeft>0 and sTop>0:
             cenx[cens], ceny[cens] = centroids[i]
             cens = cens+1
     best_answer = 1e8
@@ -65,7 +67,7 @@ def get_color_squares(edges, scale, bx1, by1) :
                 hx = x
                 hdx = dx
     ix, idx = max(6,hx), max(4,hdx)
-    ixs, idxs = 5, 3
+    ixs, idxs = 7, 3
     for x in range(ix-ixs, ix+ixs):
         dx = idx-idxs
         while dx < idx + idxs:
@@ -102,7 +104,7 @@ def get_color_squares(edges, scale, bx1, by1) :
                 hy = y
                 hdy = dy
     iy, idy = max(6,hy), max(4,hdy)
-    iys, idys = 5, 3
+    iys, idys = 7, 3
     for y in range(iy-iys, iy+iys):
         dy = idy-idys
         while dy < idy+idys:
@@ -122,7 +124,7 @@ def get_color_squares(edges, scale, bx1, by1) :
 
 def get_case_bottom_line(hx, hy, hdx, hdy, scale) :
     bx = int(hx - hdx * 240/232)
-    by = int(hy - hdy * 156/232)
+    by = int(hy - hdy * 165/232)
     return bx, by
 
 # Using cv2.Sobel()
@@ -152,7 +154,7 @@ def get_gradient(img) :
 def get_case_upper_line(gradient_img, bx, by, scale, hdx, hdxsize, case_height, case_width) :
     width = int(gradient_img.shape[1])
     height = int(gradient_img.shape[0])
-    xn, xm, yn, ym = int(bx+width/6), int(width*3/4), int(height/15), int(by-height/15)
+    xn, xm, yn, ym = int(bx+width/6), int(width*3/4), int(height/100), int(by-height/15)
     
 
     crop_img = gradient_img[yn:ym, xn:xm]
@@ -246,7 +248,7 @@ def finetune(bx, by, ux, uy, case_height, case_width):
 
 def get_case_bottom_line1(img):
     width, height = img.shape[1], img.shape[0]
-    crop = img[0:height//10, 0:width//2]
+    crop = img[0:height//50, 0:width//2]
     # print(width, height)
     # cv2.imshow('crop Image', crop), cv2.waitKey(0)
     num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(crop, connectivity=4)
@@ -254,7 +256,7 @@ def get_case_bottom_line1(img):
     for i in range(1, num_labels):
         sHeight = stats[i, cv2.CC_STAT_HEIGHT]
         sLeft = stats[i, cv2.CC_STAT_LEFT]
-        if height <= sHeight*11:
+        if height <= sHeight*52:
             if bx < sLeft:
                 bx = sLeft
     crop = img[height//10:height, width*2//3:width*3//4]
@@ -267,6 +269,8 @@ def get_case_bottom_line1(img):
         if width <= sWidth*13:
             if by > sTop:
                 by = sTop
+    if (by == height):
+        by = int(height*0.6)
     return bx, by+height//10
 
 def process(origin_img, case_height, case_width, delta, scale):

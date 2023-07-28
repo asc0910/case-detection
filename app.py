@@ -12,16 +12,20 @@ video_file = 'input.mp4'
 
 def generate_frames():
     video = cv2.VideoCapture(video_file)
+    fps = video.get(cv2.CAP_PROP_FPS)
+    print(fps)
     started_time = time.time()
     frame_count = 0
 
     while True:
+        frame_count += 1
+        frame_start_time = time.perf_counter()
         success, frame = video.read()
         if not success:
             break
-        else:
+        else:            
             start_time = time.perf_counter()
-            frame = detect_from_images.process(frame, 147, 72, 3, 7)
+            frame = detect_from_images.process(frame, 147, 72, 3, 3)
             end_time = time.perf_counter()
             elapsed_time = end_time - start_time
             print(f'process-The function took {elapsed_time} seconds to complete.')
@@ -36,7 +40,7 @@ def generate_frames():
             font_scale = 5
             font_color = (255, 255, 255)  # White color in BGR format
             line_type = 3
-            frame = cv2.putText(frame, working_time, bottom_left, font, font_scale, font_color, line_type)
+            frame = cv2.putText(frame, working_time + "," + str(frame_count), bottom_left, font, font_scale, font_color, line_type)
 
             # Encode the frame as JPEG and yield it for streaming
             start_time = time.perf_counter()
@@ -48,6 +52,11 @@ def generate_frames():
             frame = buffer.tobytes()
             yield (b'--frame\r\n'
                    b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+            
+        frame_end_time = time.perf_counter()
+        frame_elapsed_time = frame_end_time - frame_start_time
+        time.sleep(max(0, 1 / fps -frame_elapsed_time))
+        print(1 / fps -frame_elapsed_time)
 
 @app.route('/')
 def index():

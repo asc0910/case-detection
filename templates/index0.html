@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Video Streaming with Controls</title>
+</head>
+<body>
+    <h1>Video Streaming with Controls</h1>
+    <img src="" width="540" height="720" id="video_frame">
+    <p>Current Time: <span id="current_time"></span></p>
+
+    <button onclick="togglePlay()">Play/Pause</button>
+    <button onclick="stop()">Stop</button>
+    <button onclick="replay()">Replay</button>
+
+    <script>
+        var video = document.getElementById('video_frame');
+        var currentTimeSpan = document.getElementById('current_time');
+        var playing = true;
+
+        // Function to update the current time every 100ms
+        function updateCurrentTime() {
+            currentTimeSpan.textContent = new Date().toLocaleTimeString();
+        }
+
+        setInterval(updateCurrentTime, 100); // Update every 100ms
+
+        // Function to toggle play/pause
+        function togglePlay() {
+            if (playing) {
+                video.src = ''; // Pause the video stream by clearing the src attribute
+                playing = false;
+            } else {
+                video.src = "{{ url_for('video_feed') }}"; // Resume the video stream
+                playing = true;
+            }
+        }
+
+        // Function to stop the video
+        function stop() {
+            video.src = ''; // Stop the video stream
+            video.src = "{{ url_for('video_feed') }}"; // Reset the src attribute
+            playing = false;
+        }
+
+        // Function to replay the video
+        function replay() {
+            video.src = ''; // Stop the video stream
+            video.src = "{{ url_for('video_feed') }}"; // Reset the src attribute
+            playing = true;
+        }
+    </script>
+</body>
+</html>
