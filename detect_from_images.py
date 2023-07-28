@@ -3,10 +3,6 @@ import os
 import numpy as np
 import time
 
-#define AST
-    
-#define AEN
-
 def my_resize_image(image, scale):
     width = int(image.shape[1] * scale)
     height = int(image.shape[0] * scale)
@@ -48,7 +44,7 @@ def get_color_squares(edges, scale, bx1, by1) :
             cens = cens+1
     best_answer = 1e8
     hx, hdx = 0, 0
-    print(cens)
+    # print(cens)
     mnx,mxx = np.min(cenx[0:cens]), np.max(cenx[0:cens])
     for r in range(1,6):
         dx = int((mxx-mnx+r/2) // r)
